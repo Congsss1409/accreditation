@@ -1,0 +1,7 @@
+// Use the modern @use rule to import Bootstrap's Sass.
+// This resolves the deprecation warnings.
+@use "../../node_modules/bootstrap/scss/bootstrap";
+
+// Import the Bootstrap Icons CSS using a direct relative path.
+// This resolves the "file not found" error.
+@import "../../node_modules/bootstrap-icons/font/bootstrap-icons.css";

@@ -20,6 +20,12 @@ FROM php:8.2-fpm-alpine
 
 WORKDIR /app
 
+# Install necessary packages for Composer, Node.js, and NPM
+RUN apk add --no-cache nodejs npm
+
+# Download and install Composer globally
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Install required PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
 
