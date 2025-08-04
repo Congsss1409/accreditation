@@ -9,19 +9,33 @@ use App\Http\Controllers\Accreditation\ComplianceMatrixController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
 */
 
-// Redirect the root URL to the dashboard.
+// FIX: Redirect the root URL '/' to the accreditation dashboard's path.
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    // Redirecting to the path directly avoids potential route name issues.
+    return redirect('dashboard');
 });
 
-// Route for the main dashboard.
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-// Routes for the Document Repository
-Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
-Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+// The ->name('accreditation.') part has been removed from the group
+// to make route names like 'dashboard' and 'documents.index' work directly,
+// matching what is used in the view files.
+Route::prefix('accreditation')->group(function() {
 
-// Route for the Compliance Matrix
-Route::get('/compliance-matrix', [ComplianceMatrixController::class, 'index'])->name('compliance.index');
+    // This route's name is now simply 'dashboard'
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // These routes' names are now 'documents.index', 'documents.store', etc.
+    Route::resource('documents', DocumentController::class)->except(['create', 'edit', 'update', 'show']);
+    Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+
+    // This route's name is now simply 'compliance.index'
+    Route::get('compliance-matrix', [ComplianceMatrixController::class, 'index'])->name('compliance.index');
+
+});
