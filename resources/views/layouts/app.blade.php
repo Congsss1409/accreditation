@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bestlink College of the Philippines</title>
+    <title>{{ config('app.name', 'Laravel') }}</title>
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('images/logo300.png') }}">
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
@@ -16,19 +16,21 @@
         body {
             background-color: #f4f7f6;
             overflow-x: hidden;
-            /* Switched back to Poppins */
             font-family: 'Poppins', sans-serif;
-            font-weight: 300; /* Default to the lighter weight */
+            font-weight: 300;
         }
-        /* Apply bold font weight to headings and other elements */
         h1, h2, h3, h4, h5, h6, .fw-bold {
-            font-weight: 5  00 !important;
+            font-weight: 700 !important;
         }
         .sidebar {
             width: 280px;
             min-height: 100vh;
             background-color: #1e3a8a;
             transition: margin-left 0.3s ease-in-out;
+            position: fixed; /* Keep sidebar fixed */
+            z-index: 1030;
+            top: 0;
+            left: 0;
         }
         .sidebar .user-profile {
             padding: 1.5rem 1rem;
@@ -63,11 +65,12 @@
             margin-right: 0.75rem;
         }
         .main-content-wrapper {
-            width: calc(100% - 280px);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            transition: width 0.3s ease-in-out;
+            margin-left: 280px; /* Default margin for desktop */
+            width: calc(100% - 280px);
+            transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
         }
         .top-navbar {
             background-color: #ffffff;
@@ -86,12 +89,34 @@
             color: #6c757d;
         }
 
-        /* Styles for collapsed sidebar */
-        body.sidebar-collapsed .sidebar {
-            margin-left: -280px;
+        /* New overlay style */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1029; /* Just below the sidebar's z-index */
         }
-        body.sidebar-collapsed .main-content-wrapper {
-            width: 100%;
+
+        /* Responsive Styles */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                margin-left: -280px; /* Hide sidebar by default on smaller screens */
+            }
+            .main-content-wrapper {
+                margin-left: 0;
+                width: 100%;
+            }
+            body.sidebar-toggled .sidebar {
+                margin-left: 0; /* Show sidebar when toggled */
+            }
+            /* Show overlay when sidebar is toggled on mobile */
+            body.sidebar-toggled .sidebar-overlay {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -134,12 +159,7 @@
                 </li>
             </ul>
             <div class="p-3">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-danger w-100">
-                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                    </button>
-                </form>
+                <!-- This space is intentionally left blank after removing the logout button -->
             </div>
         </div>
 
@@ -151,7 +171,7 @@
                     <button id="sidebar-toggle" class="btn btn-light"><i class="bi bi-list"></i></button>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span id="current-time" class="me-3"></span>
+                    <span id="current-time" class="me-3 d-none d-sm-inline"></span>
                     <a href="#" class="text-dark me-3"><i class="bi bi-bell fs-5"></i></a>
                     <a href="#" class="text-dark me-3"><i class="bi bi-search fs-5"></i></a>
                     
@@ -185,12 +205,19 @@
                 Accreditation Management System &copy; {{ date('Y') }}
             </footer>
         </div>
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay"></div>
     </div>
 
     <script>
         // Sidebar Toggle Functionality
         document.getElementById('sidebar-toggle').addEventListener('click', function() {
-            document.body.classList.toggle('sidebar-collapsed');
+            document.body.classList.toggle('sidebar-toggled');
+        });
+
+        // New: Close sidebar when overlay is clicked
+        document.querySelector('.sidebar-overlay').addEventListener('click', function() {
+            document.body.classList.remove('sidebar-toggled');
         });
 
         // Clock Functionality
