@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Accreditation\DashboardController;
 use App\Http\Controllers\Accreditation\DocumentController;
 use App\Http\Controllers\Accreditation\ComplianceMatrixController;
@@ -9,33 +10,34 @@ use App\Http\Controllers\Accreditation\ComplianceMatrixController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
-// FIX: Redirect the root URL '/' to the accreditation dashboard's path.
+// Authentication Routes
+Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('login', [LoginController::class, 'login']);
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+
+
+// Redirect root to login page for guests, or dashboard for logged-in users.
 Route::get('/', function () {
-    // Redirecting to the path directly avoids potential route name issues.
-    return redirect('dashboard');
+    if (auth()->check()) {
+        return redirect()->route('accreditation.dashboard');
+    }
+    return redirect()->route('login');
 });
 
 
-// The ->name('accreditation.') part has been removed from the group
-// to make route names like 'dashboard' and 'documents.index' work directly,
-// matching what is used in the view files.
-Route::prefix('accreditation')->group(function() {
+// All accreditation routes are now protected by the 'auth' middleware.
+// Only logged-in users will be able to access them.
+Route::middleware(['auth'])->prefix('accreditation')->name('accreditation.')->group(function() {
 
-    // This route's name is now simply 'dashboard'
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // These routes' names are now 'documents.index', 'documents.store', etc.
-    Route::resource('documents', DocumentController::class)->except(['create', 'edit', 'update', 'show']);
+    Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::post('documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
-    // This route's name is now simply 'compliance.index'
     Route::get('compliance-matrix', [ComplianceMatrixController::class, 'index'])->name('compliance.index');
 
 });
