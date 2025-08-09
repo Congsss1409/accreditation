@@ -128,7 +128,7 @@
         <div class="login-form-container">
             <div class="login-form-wrapper">
                 <div class="text-center mb-4">
-                    <img src="{{ asset('images/logo300.png') }}" alt="Logo" style="width: 90px;">
+                    <img src="{{ asset('images/logo300.png') }}" alt="Logo" style="width: 200px;">
                     <h2 class="mt-3 fw-bold">Sign in</h2>
                 </div>
 
