@@ -3,73 +3,64 @@
 namespace App\Http\Controllers\Accreditation;
 
 use App\Http\Controllers\Controller;
-use App\Models\Document;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Document;
+use Illuminate\Support\Facades\Storage; // Import the Storage facade
 
 class DocumentController extends Controller
 {
     /**
      * Display a listing of the resource.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
-        // For now, we will get all documents. We will add user-specific logic later.
         $documents = Document::latest()->get();
         return view('accreditation.documents.index', compact('documents'));
     }
 
     /**
      * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'document_file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,png|max:20480', // 20MB Max
+            'description' => 'nullable|string',
+            'file' => 'required|file|mimes:pdf,doc,docx,jpg,png,zip|max:10240', // Max 10MB
         ]);
 
-        $file = $request->file('document_file');
-        $originalFileName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $sanitizedFileName = preg_replace('/[^A-Za-z0-9\-_]/', '', $originalFileName);
-        $fileName = time() . '_' . $sanitizedFileName . '.' . $file->getClientOriginalExtension();
-
-        $filePath = $file->storeAs('documents', $fileName, 'local');
+        $filePath = $request->file('file')->store('documents', 'public');
 
         Document::create([
             'name' => $request->name,
+            'description' => $request->description,
             'file_path' => $filePath,
-            'file_type' => $file->getClientMimeType(),
-            'user_id' => 1, // We will replace this with Auth::id() once auth is set up
+            'user_id' => auth()->id(),
         ]);
 
-        return redirect()->route('accreditation.documents.index')
-                         ->with('success', 'Document uploaded successfully.');
-    }
-
-    /**
-     * Downloads the specified document.
-     */
-    public function download(Document $document)
-    {
-        if (!Storage::disk('local')->exists($document->file_path)) {
-            return redirect()->route('accreditation.documents.index')
-                             ->with('error', 'File not found.');
-        }
-
-        return Storage::disk('local')->download($document->file_path, $document->name . '.' . pathinfo($document->file_path, PATHINFO_EXTENSION));
+        return redirect()->route('accreditation.documents.index')->with('success', 'Document uploaded successfully!');
     }
 
     /**
      * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Document  $document
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Document $document)
     {
-        Storage::disk('local')->delete($document->file_path);
+        // 1. Delete the physical file from storage
+        Storage::disk('public')->delete($document->file_path);
+
+        // 2. Delete the record from the database
         $document->delete();
 
-        return redirect()->route('accreditation.documents.index')
-                         ->with('success', 'Document deleted successfully.');
+        // 3. Redirect back with a success message
+        return redirect()->route('accreditation.documents.index')->with('success', 'Document deleted successfully!');
     }
 }

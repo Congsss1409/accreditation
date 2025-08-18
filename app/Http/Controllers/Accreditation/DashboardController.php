@@ -4,29 +4,26 @@ namespace App\Http\Controllers\Accreditation;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use App\Models\Document; // Import the Document model
 
 class DashboardController extends Controller
 {
     /**
      * Display the accreditation dashboard.
      *
-     * @return View
+     * @return \Illuminate\View\View
      */
-    public function index(): View
+    public function index()
     {
-        // This is where you would make API calls to your other microservices.
-        // For now, we are simulating the data that would be returned.
-        $stats = [
-            'documents_count' => 1234,
-            'programs_pending' => 5,
-            'upcoming_visits' => 2,
-        ];
+        // Gather statistics for the dashboard
+        $documentCount = Document::count();
+        
+        // You can add more stats here as we build other modules
+        // $sarCount = SelfAssessmentReport::count();
+        // $upcomingAudits = Audit::where('date', '>=', now())->count();
 
-        // The view function returns the specified view.
-        // We are passing the $stats array to the view.
         return view('accreditation.dashboard', [
-            'stats' => $stats
+            'documentCount' => $documentCount,
         ]);
     }
 }
